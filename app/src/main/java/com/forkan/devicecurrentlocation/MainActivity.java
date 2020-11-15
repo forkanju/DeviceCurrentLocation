@@ -28,7 +28,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    TextView tvCountry, tvState, tvCity, tvPostalCode, tvAddress;
+    TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress;
     LocationManager locationManager;
 
     Button locationButton;
@@ -42,8 +42,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         grantPermission();
 
         tvCountry = findViewById(R.id.tv_country);
-        tvState = findViewById(R.id.tv_state);
+        tvDivision = findViewById(R.id.tv_division);
         tvCity = findViewById(R.id.tv_city);
+        tvArea = findViewById(R.id.tv_area);
         tvPostalCode = findViewById(R.id.tv_postal_code);
         tvAddress = findViewById(R.id.tv_address);
 
@@ -123,9 +124,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
 
-            tvCountry.setText(addresses.get(0).getCountryName() );
-            tvState.setText(addresses.get(0).getAdminArea() );
-            tvCity.setText(addresses.get(0).getSubLocality() );
+            tvCountry.setText(addresses.get(0).getCountryName());
+            tvDivision.setText(addresses.get(0).getAdminArea());
+            tvCity.setText(addresses.get(0).getLocality());
+            tvArea.setText(addresses.get(0).getSubLocality());
             tvPostalCode.setText(addresses.get(0).getPostalCode());
             tvAddress.setText(addresses.get(0).getAddressLine(0));
 
