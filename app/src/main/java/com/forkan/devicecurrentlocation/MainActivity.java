@@ -18,9 +18,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,10 +30,17 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress;
+    double lat1 = 0;
+    double lat2 = 0;
+    double lon1 = 0;
+    double lon2 = 0;
+
+    boolean btn = true;
+
+    TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress, distanceKM;
     LocationManager locationManager;
 
-    Button locationButton;
+    Button locationButton, startLocation, stopLocation;
 
 
     @Override
@@ -47,17 +56,43 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         tvArea = findViewById(R.id.tv_area);
         tvPostalCode = findViewById(R.id.tv_postal_code);
         tvAddress = findViewById(R.id.tv_address);
+        tvAddress = findViewById(R.id.tv_address);
+
+        distanceKM = findViewById(R.id.distance_km);
+
 
         locationButton = findViewById(R.id.btn_current_location);
+        startLocation = findViewById(R.id.btn_current_location_start);
+        stopLocation = findViewById(R.id.btn_current_location_stop);
+
+        startLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btn = true;
+
+                Toast.makeText(getApplicationContext(), "START", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        stopLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                btn = false;
+                Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         locationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getMyLocation();
+                Toast.makeText(getApplicationContext(), "LOC", Toast.LENGTH_SHORT).show();
             }
         });
 
+
         checkLocationIsEnabledOrNot(); //this will redirect us to the location setting
+        //     getMyLocation();
 
 
     }
@@ -131,6 +166,22 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             tvPostalCode.setText(addresses.get(0).getPostalCode());
             tvAddress.setText(addresses.get(0).getAddressLine(0));
 
+            if (btn == true) {
+
+                lat1 = addresses.get(0).getLatitude();
+                lon1 = addresses.get(0).getLongitude();
+                Log.d("TAG_LAT", lat1 + "");
+                Log.d("TAG_LON", lon1 + "");
+                Toast.makeText(getApplicationContext(), "TAG_LAT" + lat1, Toast.LENGTH_SHORT).show();
+
+            } else if (btn == false) {
+
+                lat2 = addresses.get(0).getLatitude();
+                lon2 = addresses.get(0).getLongitude();
+                getDistance(lat1, lon1, lat2, lon2);
+            }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -150,5 +201,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     public void onProviderDisabled(@NonNull String provider) {
 
     }
+
+    public double getDistance(double lat1, double lon1, double lat2, double lon2) {
+        double latA = Math.toRadians(lat1);
+        double lonA = Math.toRadians(lon1);
+        double latB = Math.toRadians(lat2);
+        double lonB = Math.toRadians(lon2);
+        double cosAng = (Math.cos(latA) * Math.cos(latB) * Math.cos(lonB - lonA)) +
+                (Math.sin(latA) * Math.sin(latB));
+        double ang = Math.acos(cosAng);
+        double dist = ang * 6371;
+
+        distanceKM.setText((int) dist);
+
+        return dist;
+    }
+
 
 }
