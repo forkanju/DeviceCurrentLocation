@@ -1,10 +1,5 @@
 package com.forkan.devicecurrentlocation;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -24,6 +19,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     double lon1 = 0;
     double lon2 = 0;
 
-    boolean btn = true;
+    double distanceinKm = 0;
 
     TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress, distanceKM;
     LocationManager locationManager;
@@ -47,6 +47,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle("Invoice Details");
 
         grantPermission();
 
@@ -65,22 +69,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         startLocation = findViewById(R.id.btn_current_location_start);
         stopLocation = findViewById(R.id.btn_current_location_stop);
 
-        startLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btn = true;
-
-                Toast.makeText(getApplicationContext(), "START", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        stopLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btn = false;
-                Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         locationButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -166,20 +154,30 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             tvPostalCode.setText(addresses.get(0).getPostalCode());
             tvAddress.setText(addresses.get(0).getAddressLine(0));
 
-            if (btn == true) {
 
-                lat1 = addresses.get(0).getLatitude();
-                lon1 = addresses.get(0).getLongitude();
-                Log.d("TAG_LAT", lat1 + "");
-                Log.d("TAG_LON", lon1 + "");
-                Toast.makeText(getApplicationContext(), "TAG_LAT" + lat1, Toast.LENGTH_SHORT).show();
+            startLocation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    lat1 = addresses.get(0).getLatitude();
+                    lon1 = addresses.get(0).getLongitude();
 
-            } else if (btn == false) {
+                    Log.d("TAG_LAT", lat1 + "");
+                    Log.d("TAG_LON", lon1 + "");
+                    Toast.makeText(getApplicationContext(), "TAG_LAT_1: " + lat1, Toast.LENGTH_LONG).show();
+                }
+            });
 
-                lat2 = addresses.get(0).getLatitude();
-                lon2 = addresses.get(0).getLongitude();
-                getDistance(lat1, lon1, lat2, lon2);
-            }
+
+            stopLocation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    lat2 = addresses.get(0).getLatitude();
+                    lon2 = addresses.get(0).getLongitude();
+
+                    distance(lat1, lon1, lat2, lon2);
+                    Toast.makeText(getApplicationContext(), "TAG_LAT_2: " + lat2, Toast.LENGTH_LONG).show();
+                }
+            });
 
 
         } catch (IOException e) {
@@ -202,20 +200,46 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     }
 
-    public double getDistance(double lat1, double lon1, double lat2, double lon2) {
-        double latA = Math.toRadians(lat1);
-        double lonA = Math.toRadians(lon1);
-        double latB = Math.toRadians(lat2);
-        double lonB = Math.toRadians(lon2);
-        double cosAng = (Math.cos(latA) * Math.cos(latB) * Math.cos(lonB - lonA)) +
-                (Math.sin(latA) * Math.sin(latB));
-        double ang = Math.acos(cosAng);
-        double dist = ang * 6371;
 
-        distanceKM.setText((int) dist);
+    private double distance(double lat1, double lon1, double lat2, double lon2) {
+        double theta = lon1 - lon2;
+        double dist = Math.sin(deg2rad(lat1))
+                * Math.sin(deg2rad(lat2))
+                + Math.cos(deg2rad(lat1))
+                * Math.cos(deg2rad(lat2))
+                * Math.cos(deg2rad(theta));
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515;
 
-        return dist;
+        distanceinKm += (float) dist / 0.62137;  //divide to get km from miles
+
+        distanceKM.setText((int) distanceinKm + " km");
+        return (dist);
+    }
+
+    private double deg2rad(double deg) {
+        return (deg * Math.PI / 180.0);
     }
 
 
+    private double rad2deg(double rad) {
+        return (rad * 180.0 / Math.PI);
+    }
+
+    //Back navigation
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        lat1 = lat2;
+        lon1 = lon2;
+        Toast.makeText(getApplicationContext(), "Back Pressed", Toast.LENGTH_SHORT).show();
+    }
 }
