@@ -28,23 +28,27 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import io.realm.Realm;
+
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    double lat1 = 0;
-    double lat2 = 0;
-    double lon1 = 0;
-    double lon2 = 0;
+//    double lat1 = 0;
+//    double lat2 = 0;
+//    double lon1 = 0;
+//    double lon2 = 0;
 
-    double distanceinKm = 0;
+    double distanceinM = 0;
 
-    TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress, distanceKM;
+    TextView tvCountry, tvDivision, tvArea, tvCity, tvPostalCode, tvAddress, distanceM;
     LocationManager locationManager;
 
+    Realm realm;
     Button locationButton, startLocation, stopLocation;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -62,25 +66,26 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         tvAddress = findViewById(R.id.tv_address);
         tvAddress = findViewById(R.id.tv_address);
 
-        distanceKM = findViewById(R.id.distance_km);
+        distanceM = findViewById(R.id.distance_km);
+
+//
+//        locationButton = findViewById(R.id.btn_current_location);
+//        startLocation = findViewById(R.id.btn_current_location_start);
+//        stopLocation = findViewById(R.id.btn_current_location_stop);
 
 
-        locationButton = findViewById(R.id.btn_current_location);
-        startLocation = findViewById(R.id.btn_current_location_start);
-        stopLocation = findViewById(R.id.btn_current_location_stop);
+//        locationButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//                Toast.makeText(getApplicationContext(), "LOC", Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
-
-        locationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getMyLocation();
-                Toast.makeText(getApplicationContext(), "LOC", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+//        realm = Realm.getDefaultInstance();
 
         checkLocationIsEnabledOrNot(); //this will redirect us to the location setting
-        //     getMyLocation();
+        getMyLocation();
 
 
     }
@@ -154,35 +159,63 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             tvPostalCode.setText(addresses.get(0).getPostalCode());
             tvAddress.setText(addresses.get(0).getAddressLine(0));
 
+            ////////////////////////////////////////For Distance // AppDatabase by Anwar ///////////////////////////
 
-            startLocation.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    lat1 = addresses.get(0).getLatitude();
-                    lon1 = addresses.get(0).getLongitude();
+//            Distance distance = AppDatabase.getDistance();
+//            if (distance.getpLatitude() != 0 && distance.getpLongitude() != 0) {
+//                long currentTimestamp = System.currentTimeMillis();
+//                if (currentTimestamp != distance.getTimestamp()) {
+//
+//                    long currentMeter = (long) calculateDistance(distance.getpLatitude(), distance.getpLongitude(),
+//                            addresses.get(0).getLatitude(), addresses.get(0).getLongitude());
+//
+//                    long sumOfDistance = currentMeter + distance.getDistance();
+//                    //show distance sum to the text view
+//                    distanceM.setText((int) sumOfDistance);
+//
+//                    Distance distance1 = new Distance(addresses.get(0).getLatitude(), addresses.get(0).getLongitude(),
+//                            sumOfDistance, currentTimestamp);
+//                    //save the latest distance to realm database
+//                    AppDatabase.saveDistance(distance1);
+//                }
+//            }
 
-                    Log.d("TAG_LAT", lat1 + "");
-                    Log.d("TAG_LON", lon1 + "");
-                    Toast.makeText(getApplicationContext(), "TAG_LAT_1: " + lat1, Toast.LENGTH_LONG).show();
-                }
-            });
+
+            calculateDistance(23.781383, 90.417452,
+                    addresses.get(0).getLatitude(), addresses.get(0).getLongitude());
+
+            ////////////////////////////////For Distance // AppDatabase by Anwar ///////////////////////////////////
+
+//            startLocation.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    lat1 = addresses.get(0).getLatitude();
+//                    lon1 = addresses.get(0).getLongitude();
+//
+//                    Log.d("TAG_LAT", lat1 + "");
+//                    Log.d("TAG_LON", lon1 + "");
+//                    Toast.makeText(getApplicationContext(), "TAG_LAT_1: " + lat1, Toast.LENGTH_LONG).show();
+//                }
+//            });
 
 
-            stopLocation.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    lat2 = addresses.get(0).getLatitude();
-                    lon2 = addresses.get(0).getLongitude();
-
-                    distance(lat1, lon1, lat2, lon2);
-                    Toast.makeText(getApplicationContext(), "TAG_LAT_2: " + lat2, Toast.LENGTH_LONG).show();
-                }
-            });
+//            stopLocation.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    lat2 = addresses.get(0).getLatitude();
+//                    lon2 = addresses.get(0).getLongitude();
+//
+//                    calculateDistance(lat1, lon1, lat2, lon2);
+//                    Toast.makeText(getApplicationContext(), "TAG_LAT_2: " + lat2, Toast.LENGTH_LONG).show();
+//                }
+//            });
 
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
     }
 
     @Override
@@ -201,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
 
-    private double distance(double lat1, double lon1, double lat2, double lon2) {
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         double theta = lon1 - lon2;
         double dist = Math.sin(deg2rad(lat1))
                 * Math.sin(deg2rad(lat2))
@@ -212,16 +245,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         dist = rad2deg(dist);
         dist = dist * 60 * 1.1515;
 
-        distanceinKm += (float) dist / 0.62137;  //divide to get km from miles
-
-        distanceKM.setText((int) distanceinKm + " km");
+        distanceinM = ((float) dist / 0.62137) / 1000;  //divide to get km from miles//second divide to get meter from km.
+        distanceM.setText((float) distanceinM + " m");
+        Toast.makeText(getApplicationContext(), "Distance" + distanceinM, Toast.LENGTH_SHORT).show();
         return (dist);
     }
+
 
     private double deg2rad(double deg) {
         return (deg * Math.PI / 180.0);
     }
-
 
     private double rad2deg(double rad) {
         return (rad * 180.0 / Math.PI);
@@ -235,11 +268,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        lat1 = lat2;
-        lon1 = lon2;
-        Toast.makeText(getApplicationContext(), "Back Pressed", Toast.LENGTH_SHORT).show();
-    }
+//    @Override
+//    public void onBackPressed() {
+//        super.onBackPressed();
+//        lat1 = lat2;
+//        lon1 = lon2;
+//        Toast.makeText(getApplicationContext(), "Back Pressed", Toast.LENGTH_SHORT).show();
+//    }
 }
